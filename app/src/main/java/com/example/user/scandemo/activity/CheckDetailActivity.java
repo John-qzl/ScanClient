@@ -39,7 +39,9 @@ import org.litepal.crud.DataSupport;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -176,6 +178,7 @@ public class CheckDetailActivity extends FragmentActivity implements AdapterView
         String WCQK = "";
         int YPD = 0;
         int PDSBZS = 0;
+        float pressent = 0;
         Cursor cursor = db.rawQuery("select * from W_PDSBB where F_XTLSH=?", new String[]{data});
         if (cursor.moveToNext()) {
             parentID = cursor.getString(cursor.getColumnIndex("REFID"));
@@ -186,7 +189,7 @@ public class CheckDetailActivity extends FragmentActivity implements AdapterView
             PDSBZS = Integer.parseInt(cursor1.getString(cursor1.getColumnIndex("F_PDSBZS")));
         }
         if (PDSBZS != 0) {
-            float pressent = (float) (YPD + 1) / PDSBZS * 100;
+            pressent = (float) (YPD + 1) / PDSBZS * 100;
             DecimalFormat decimalFormat =new DecimalFormat("0.00");//构造方法的字符格式这里如果小数不足2位,会以0补足.
             WCQK = decimalFormat.format(pressent);
         }
@@ -194,6 +197,12 @@ public class CheckDetailActivity extends FragmentActivity implements AdapterView
         ContentValues cv= new ContentValues();
         cv.put("F_YPD",String.valueOf(YPD+1));
         cv.put("F_WCQK",WCQK);
+        if (WCQK.equals("100.00")) {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");// HH:mm:ss
+            //获取当前时间
+            Date date = new Date(System.currentTimeMillis());
+            cv.put("F_JSSJ",simpleDateFormat.format(date));
+        }
         //更新条件
         String whereClause = "ID = ?";
         //更新条件数组
