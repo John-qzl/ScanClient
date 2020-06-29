@@ -3,6 +3,7 @@
     <dimen name="one">22dp</dimen>
     <dimen name="two">20dp</dimen>
     <dimen name="three">18dp</dimen>
+    <dimen name="four">14dp</dimen>
     <dimen name="star">28dp</dimen>
 
 </resources>

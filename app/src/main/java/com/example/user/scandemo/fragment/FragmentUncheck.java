@@ -101,14 +101,14 @@ public class FragmentUncheck extends BaseFragment implements PullToRefreshBase.O
             }
         }, 1000);
         onResume();
-        if (readDb()) {
-            checkDetailBeanList.clear();
-            checkDetailBeanList = DataSupport.where("checkID=? and status=?", checkID, "否").find(CheckDetailBean.class);
-            checkDetailListAdapter.notifyDataSetChanged();
-            showToast("刷新成功");
-        } else {
-            showToast("刷新失败");
-        }
+//        if (readDb()) {
+//            checkDetailBeanList.clear();
+//            checkDetailBeanList = DataSupport.where("checkID=? and status=?", checkID, "否").find(CheckDetailBean.class);
+//            checkDetailListAdapter.notifyDataSetChanged();
+//            showToast("刷新成功");
+//        } else {
+//            showToast("刷新失败");
+//        }
     }
 
     @Override

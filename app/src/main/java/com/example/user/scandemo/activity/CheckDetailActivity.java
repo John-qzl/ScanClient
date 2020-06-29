@@ -1,43 +1,43 @@
 package com.example.user.scandemo.activity;
 
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.user.scandemo.Base.App;
-import com.example.user.scandemo.Base.BaseActivity;
 import com.example.user.scandemo.Bean.CheckBean;
 import com.example.user.scandemo.Bean.CheckDetailBean;
 import com.example.user.scandemo.R;
 import com.example.user.scandemo.ScannerInterface;
+import com.example.user.scandemo.application.ScanApplicaton;
 import com.example.user.scandemo.barcodeservice.SerialPortService;
 import com.example.user.scandemo.db.SQLdb;
 import com.example.user.scandemo.fragment.HomeFragment;
+import com.example.user.scandemo.thread.LoadDBThread;
 import com.example.user.scandemo.utils.ActivityCollector;
 
 import org.litepal.crud.DataSupport;
 
-import java.io.File;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -55,6 +55,8 @@ public class CheckDetailActivity extends FragmentActivity implements AdapterView
     private static String chechID;
     private static List<CheckDetailBean> checkDetailBeanList = new ArrayList<>();
     public static SQLdb sqLdb;
+    private ProgressDialog prodlg;
+    private Context context;
 
     ScannerInterface scanner;
     IntentFilter intentFilter;
@@ -71,11 +73,17 @@ public class CheckDetailActivity extends FragmentActivity implements AdapterView
         setContentView(R.layout.activity_checkdetail);
 //        getActionBar().hide();
         ActivityCollector.addActivity(this);
+        context = this;
         initview();
         sqLdb = new SQLdb();
         chechID = getIntent().getStringExtra("checkID");
 //        localPosition = 0;
         selectItem(localPosition);
+
+        this.prodlg = ProgressDialog.show(this, "提示", "正在加载数据");
+        prodlg.setIcon(this.getResources().getDrawable(R.mipmap.scan1));
+        LoadDBThread uptataThread = new LoadDBThread(context, handler);
+        uptataThread.start();
 //        initScanner();
 //        IntentFilter intentFilter = new IntentFilter();
 //        intentFilter.addAction(SerialPortService.BARCODEPORT_RECEIVEDDATA_ACTION);
@@ -94,7 +102,7 @@ public class CheckDetailActivity extends FragmentActivity implements AdapterView
         checkDetailBeanList.clear();
         DataSupport.deleteAll(CheckDetailBean.class);
         Boolean result = false;
-        SQLiteDatabase db = sqLdb.openDatabase(App.getApp().getApplicationContext());
+        SQLiteDatabase db = sqLdb.openDatabase();
 
         String sqlqurey = "select * from W_PDSBB where REFID=?";
         if (db != null) {
@@ -129,7 +137,7 @@ public class CheckDetailActivity extends FragmentActivity implements AdapterView
      * @return
      */
     public static void updateDb(String data, String chechId) {
-        SQLiteDatabase db = sqLdb.openDatabase(App.getApp().getApplicationContext());
+        SQLiteDatabase db = sqLdb.openDatabase();
         String status = "";
         //查询此盘点计划有无此信息
         List<CheckDetailBean> checkDetailBean1 = DataSupport.where("checkID=? and deviceID=?", chechId,data).find(CheckDetailBean.class);
@@ -173,7 +181,7 @@ public class CheckDetailActivity extends FragmentActivity implements AdapterView
      * @return
      */
     public static void updateMainDb(String data) {
-        SQLiteDatabase db = sqLdb.openDatabase(App.getApp().getApplicationContext());
+        SQLiteDatabase db = sqLdb.openDatabase();
         String parentID = "";
         String WCQK = "";
         int YPD = 0;
@@ -220,7 +228,7 @@ public class CheckDetailActivity extends FragmentActivity implements AdapterView
         checkBean.setYpd(checkBean.getPdzs() + 1);
         checkBean.updateAll("checkID=?", parentID);
 //        Toast.makeText(App.getApp().getApplicationContext(), "数据更新成功", Toast.LENGTH_LONG).show();
-        readDb();
+//        readDb();
     }
 
     private void initview() {
@@ -257,7 +265,8 @@ public class CheckDetailActivity extends FragmentActivity implements AdapterView
      * Diplaying fragment view for selected nav drawer list item
      * */
     private void selectItem(final int position) {
-        readDb();
+//        readDb();
+
         Fragment fragment = null;
         if(checkDetailBeanList.size() > 0){
             localPosition = position;
@@ -342,6 +351,71 @@ public class CheckDetailActivity extends FragmentActivity implements AdapterView
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
+    }
+
+    /**
+     * @Description: 读取DB文件线程
+     * @author qiaozhili
+     * @date 2020/3/24 10:53
+     * @param
+     * @return
+     */
+    private void starReadDB() {
+        this.prodlg = ProgressDialog.show(this, "提示", "正在读取数据");
+        prodlg.setIcon(this.getResources().getDrawable(R.mipmap.scan1));
+        LoadDBThread uptataThread = new LoadDBThread(this, handler);
+        uptataThread.start();
+    }
+
+    // 根据消息更新界面
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            Bundle bundle = msg.getData();
+            String processTitle = (String) bundle.get("UPDATE PORGRESS");
+            if (processTitle != null && !processTitle.isEmpty()) {
+                String infor = (String) bundle.get("INFORMATION");
+                prodlg.setTitle(processTitle); // title
+                prodlg.setMessage(infor); // information
+                return;
+            }
+
+            // 响应读取本地文件或者同步结束
+            String readResult = (String) bundle.get("localread");
+            if (readResult != null && readResult.equalsIgnoreCase("okupdata"))// 读本地出错
+            {
+                prodlg.dismiss();
+                String flag = (String) bundle.get("flag");
+                readDBWarn(flag);
+            }
+            return;
+        }
+    };
+
+    private void readDBWarn(final String flag) {
+        AlertDialog.Builder dialog = new AlertDialog.Builder(context);
+        dialog.setIcon(R.mipmap.scan1).setTitle("数据加载完毕，点击确认刷新页面！");
+//        dialog.setMessage("version:" + apkVersion);
+        dialog.setCancelable(false);
+        dialog.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                if (flag != "") {
+                    checkDetailBeanList = ScanApplicaton.getApplication().checkDetailBeanList;
+                    selectItem(localPosition);
+                } else {
+                    Toast.makeText(CheckDetailActivity.this, "数据加载失败，请检查服务端数据！", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        dialog.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
     }
 
 //    /**

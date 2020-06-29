@@ -115,12 +115,12 @@ public class FragmentAll extends BaseFragment implements PullToRefreshBase.OnRef
 
             }
         }, 1000);
-        if (readDb()) {
-            checkDetailListAdapter.notifyDataSetChanged();
-            showToast("刷新成功");
-        } else {
-            showToast("刷新失败");
-        }
+//        if (readDb()) {
+//            checkDetailListAdapter.notifyDataSetChanged();
+//            showToast("刷新成功");
+//        } else {
+//            showToast("刷新失败");
+//        }
     }
 
     @Override

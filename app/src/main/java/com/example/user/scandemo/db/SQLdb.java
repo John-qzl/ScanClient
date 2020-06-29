@@ -41,7 +41,7 @@ public class SQLdb {
     //数据库存储路径
     public static String filePath1 = Environment.getExternalStorageDirectory() + "/ScanClient/pandian.db";
     public static String filePath = Environment.getExternalStorageDirectory() + "/ScanClient";
-    public  SQLiteDatabase openDatabase(Context context){
+    public  SQLiteDatabase openDatabase(){
         System.out.println("filePath:" + filePath);
         File jhPath = new File(filePath);
         File jhPath1 = new File(filePath1);

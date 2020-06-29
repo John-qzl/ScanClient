@@ -92,7 +92,7 @@ public class MainActivity extends BaseActivity implements CheckListAdapter.OnChe
         DataSupport.deleteAll(CheckBean.class);
         boolean result = false;
         sqLdb = new SQLdb();
-        SQLiteDatabase db = sqLdb.openDatabase(App.getApp().getApplicationContext());
+        SQLiteDatabase db = sqLdb.openDatabase();
 
         String sqlqurey = "select * from W_ZCPDJHB where ID=?";
 //        String sqlqurey1 = "select * from W_PDSBB where REFID=?";

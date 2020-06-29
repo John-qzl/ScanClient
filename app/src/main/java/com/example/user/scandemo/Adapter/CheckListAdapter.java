@@ -12,6 +12,7 @@ import android.widget.TextView;
 import com.example.user.scandemo.Bean.CheckBean;
 import com.example.user.scandemo.R;
 import com.example.user.scandemo.Base.BaseRecyclerAdapter;
+import com.example.user.scandemo.application.ScanApplicaton;
 import com.example.user.scandemo.event.OnRecyclerItemClickListener;
 
 import java.util.List;
@@ -68,6 +69,7 @@ public class CheckListAdapter extends BaseAdapter {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                ScanApplicaton.getApplication().setChechID(data.getCheckID());
                 onCheckListListener.itemClick(data.getCheckID());
             }
         });
